@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Guru Bertugas Mingguan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none; }
+            body { font-size: 12px; }
+            table { font-size: 11px; }
+            .page-break { page-break-before: always; }
+        }
+
+        /* Sticky header jadual */
+        thead th {
+            position: sticky;
+            top: 0;
+            background: #f9fafb;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold text-center mb-6">Laporan Guru Bertugas Mingguan</h1>
+
+        <!-- Butang -->
+        <div class="flex justify-end mb-4 no-print">
+            <button onclick="generateReport()" class="bg-blue-500 text-white px-4 py-2 rounded">Jana Laporan</button>
+            <button onclick="window.print()" class="ml-2 bg-green-500 text-white px-4 py-2 rounded">Cetak</button>
+        </div>
+
+        <!-- Maklumat Asas -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div>
+                <label class="font-semibold">Minggu:</label>
+                <input type="text" id="minggu" class="border p-2 w-full rounded">
+            </div>
+            <div>
+                <label class="font-semibold">Tarikh:</label>
+                <input type="date" id="tarikh" class="border p-2 w-full rounded">
+            </div>
+            <div>
+                <label class="font-semibold">Nama Guru Bertugas 1:</label>
+                <input type="text" id="guru-1" class="border p-2 w-full rounded">
+            </div>
+            <div>
+                <label class="font-semibold">Nama Guru Bertugas 2:</label>
+                <input type="text" id="guru-2" class="border p-2 w-full rounded">
+            </div>
+        </div>
+
+        <!-- Jadual Kehadiran Murid -->
+        <h2 class="text-lg font-bold mb-2">Kehadiran Murid</h2>
+        <div class="overflow-x-auto">
+            <table class="table-auto w-full border-collapse border border-gray-300 text-sm">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="border px-2 py-1">Tingkatan</th>
+                        <th class="border px-2 py-1">Sebenar (L)</th>
+                        <th class="border px-2 py-1">Hadir (L)</th>
+                        <th class="border px-2 py-1">Tidak Hadir (L)</th>
+                        <th class="border px-2 py-1">Sebenar (P)</th>
+                        <th class="border px-2 py-1">Hadir (P)</th>
+                        <th class="border px-2 py-1">Tidak Hadir (P)</th>
+                        <th class="border px-2 py-1">Jumlah Murid</th>
+                        <th class="border px-2 py-1">Jumlah Hadir</th>
+                        <th class="border px-2 py-1">Jumlah Tidak Hadir</th>
+                    </tr>
+                </thead>
+                <tbody id="muridTable">
+                    <tr>
+                        <td class="border px-2 py-1 text-center">1</td>
+                        <td><input type="number" id="sebenar-l-1" class="w-20 p-1 border rounded table-input"></td>
+                        <td><input type="number" id="hadir-l-1" class="w-20 p-1 border rounded table-input"></td>
+                        <td id="tak-hadir-l-1" class="border text-center">0</td>
+                        <td><input type="number" id="sebenar-p-1" class="w-20 p-1 border rounded table-input"></td>
+                        <td><input type="number" id="hadir-p-1" class="w-20 p-1 border rounded table-input"></td>
+                        <td id="tak-hadir-p-1" class="border text-center">0</td>
+                        <td id="jumlah-sebenar-1" class="border text-center">0</td>
+                        <td id="jumlah-hadir-1" class="border text-center">0</td>
+                        <td id="jumlah-tak-hadir-1" class="border text-center">0</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Ruang tambahan laporan -->
+        <h2 class="text-lg font-bold mt-6 mb-2">Catatan Guru Bertugas</h2>
+        <textarea id="catatan" class="w-full border rounded p-2" rows="4"></textarea>
+
+        <h2 class="text-lg font-bold mt-6 mb-2">Kehadiran Guru & AKS</h2>
+        <textarea id="guru-aks" class="w-full border rounded p-2" rows="4"></textarea>
+
+        <h2 class="text-lg font-bold mt-6 mb-2">Laporan RMT</h2>
+        <textarea id="rmt" class="w-full border rounded p-2" rows="4"></textarea>
+
+        <h2 class="text-lg font-bold mt-6 mb-2">Rumusan / Perkara Berbangkit</h2>
+        <textarea id="rumusan" class="w-full border rounded p-2" rows="4"></textarea>
+    </div>
+
+    <script>
+        function calculateRow(rowId) {
+            const sebenarL = parseInt(document.getElementById(`sebenar-l-${rowId}`).value) || 0;
+            const sebenarP = parseInt(document.getElementById(`sebenar-p-${rowId}`).value) || 0;
+
+            let hadirL = parseInt(document.getElementById(`hadir-l-${rowId}`).value) || 0;
+            let hadirP = parseInt(document.getElementById(`hadir-p-${rowId}`).value) || 0;
+
+            // Clamp supaya tak lebih dari sebenar
+            hadirL = Math.min(hadirL, sebenarL);
+            hadirP = Math.min(hadirP, sebenarP);
+
+            const takHadirL = sebenarL - hadirL;
+            const takHadirP = sebenarP - hadirP;
+
+            document.getElementById(`hadir-l-${rowId}`).value = hadirL;
+            document.getElementById(`hadir-p-${rowId}`).value = hadirP;
+
+            document.getElementById(`tak-hadir-l-${rowId}`).textContent = takHadirL;
+            document.getElementById(`tak-hadir-p-${rowId}`).textContent = takHadirP;
+
+            document.getElementById(`jumlah-sebenar-${rowId}`).textContent = sebenarL + sebenarP;
+            document.getElementById(`jumlah-hadir-${rowId}`).textContent = hadirL + hadirP;
+            document.getElementById(`jumlah-tak-hadir-${rowId}`).textContent = takHadirL + takHadirP;
+        }
+
+        document.querySelectorAll('.table-input').forEach(input => {
+            input.addEventListener('input', () => {
+                const idParts = input.id.split('-');
+                if (idParts.length > 2) {
+                    const rowId = idParts[idParts.length - 1]; 
+                    calculateRow(rowId);
+                }
+            });
+        });
+
+        function generateReport() {
+            alert("Laporan berjaya dijana! (Cetak untuk simpan versi rasmi)");
+        }
+    </script>
+</body>
+</html>
